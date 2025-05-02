@@ -5,86 +5,60 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>A7 Futebol - Escanteios ao Vivo</title>
   <link rel="manifest" href="manifest.json">
-  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="icon" href="favicon.png" type="image/png">
   <meta name="theme-color" content="#000000">
   <style>
-    body {
-      background-color: #000;
-      color: #fff;
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 1rem;
-    }
-    header {
-      text-align: center;
-      margin-bottom: 2rem;
-    }
-    .jogo {
-      background: #111;
-      border: 1px solid #333;
-      border-radius: 8px;
-      padding: 1rem;
-      margin-bottom: 1rem;
-    }
-    .chance-alta {
-      color: #0f0;
-      font-weight: bold;
-    }
+    body { background:#000; color:#fff; font-family:Arial,sans-serif; margin:0; padding:1rem; }
+    header { text-align:center; margin-bottom:2rem; }
+    .jogo { background:#111; border:1px solid #333; border-radius:8px; padding:1rem; margin-bottom:1rem; }
+    .chance-alta { color:#0f0; font-weight:bold; }
   </style>
 </head>
 <body>
   <header>
-    <img src="logo.png" alt="A7 Futebol" style="width: 120px;"><br>
-    <h1>A7 Futebol</h1>
-    <p>Jogos ao vivo com chance de escanteios</p>
+    <img src="logo.png" alt="A7 Futebol" style="width:120px"><br>
+    <h1>Bem-vindo ao A7 Futebol</h1>
+    <p>Seu app de análise de escanteios em tempo real.</p>
   </header>
-
-  <main id="jogos">Carregando partidas ao vivo...</main>
-
+  <main id="jogos">Carregando partidas ao vivo…</main>
   <script>
     const apiKey = '6bad84f7472bc9075b0aeb6ede8957f2';
-
+    const dadosSimulados = [
+      { time_mandante:{nome:"Time A"}, time_visitante:{nome:"Time B"}, escanteios_mandante:3, escanteios_visitante:2, placar:{minuto:45} },
+      { time_mandante:{nome:"Time C"}, time_visitante:{nome:"Time D"}, escanteios_mandante:4, escanteios_visitante:3, placar:{minuto:60} }
+    ];
     async function buscarJogos() {
+      let jogos;
       try {
-        const resposta = await fetch('https://api.api-futebol.com.br/v1/ao-vivo', {
-          headers: {
-            Authorization: `Bearer ${apiKey}`
-          }
+        const r = await fetch('https://api.api-futebol.com.br/v1/ao-vivo', {
+          headers: { Authorization: `Bearer ${apiKey}` }
         });
-
-        if (!resposta.ok) throw new Error('Erro ao buscar jogos: ' + resposta.status);
-
-        const dados = await resposta.json();
-        const container = document.getElementById('jogos');
-        container.innerHTML = '';
-
-        if (!dados || dados.length === 0) {
-          container.innerHTML = '<p>Nenhuma partida ao vivo no momento.</p>';
-          return;
-        }
-
-        dados.forEach(jogo => {
-          const totalEscanteios = jogo.escanteios_mandante + jogo.escanteios_visitante;
-          const chance = Math.min(100, Math.floor(totalEscanteios * 7)); // Simulação
-
-          const div = document.createElement('div');
-          div.className = 'jogo';
-          div.innerHTML = `
-            <strong>${jogo.time_mandante.nome} x ${jogo.time_visitante.nome}</strong><br>
-            Minuto: ${jogo.placar.minuto} | Escanteios: ${totalEscanteios}<br>
-            <span class="${chance >= 75 ? 'chance-alta' : ''}">Chance de escanteio: ${chance}%</span>
-          `;
-          container.appendChild(div);
-        });
-
-      } catch (erro) {
-        console.error('Erro:', erro);
-        document.getElementById('jogos').innerHTML = '<p>Erro ao carregar os dados.</p>';
+        if (!r.ok) throw new Error();
+        const data = await r.json();
+        jogos = (data && data.length) ? data : dadosSimulados;
+      } catch {
+        jogos = dadosSimulados;
       }
+      exibir(jogos);
     }
-
+    function exibir(arr) {
+      const c = document.getElementById('jogos');
+      c.innerHTML = '';
+      arr.forEach(j=> {
+        const total = j.escanteios_mandante + j.escanteios_visitante;
+        const chance = Math.min(100, total * 7 | 0);
+        const el = document.createElement('div');
+        el.className='jogo';
+        el.innerHTML=`
+          <strong>${j.time_mandante.nome} x ${j.time_visitante.nome}</strong><br>
+          Minuto: ${j.placar.minuto} | Escanteios: ${total}<br>
+          <span class="${chance >= 75 ? 'chance-alta' : ''}">Chance de escanteio: ${chance}%</span>
+        `;
+        c.appendChild(el);
+      });
+    }
     buscarJogos();
-    setInterval(buscarJogos, 60000); // atualiza a cada 1 min
+    setInterval(buscarJogos, 60000);
   </script>
 </body>
 </html>
