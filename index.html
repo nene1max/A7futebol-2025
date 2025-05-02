@@ -1,1 +1,86 @@
-<!DOCTYPE html><html><head><title>A7 Futebol</title></head><body><h1>Bem-vindo ao A7 Futebol</h1></body></html>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>A7 Futebol - Escanteios ao Vivo</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#000000">
+  <style>
+    body {
+      background-color: #121212;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    h1 {
+      color: #00ff88;
+    }
+    .jogo {
+      border: 1px solid #333;
+      padding: 10px;
+      margin-bottom: 10px;
+      background-color: #1e1e1e;
+    }
+    .prob-alta {
+      color: #00ff88;
+      font-weight: bold;
+    }
+    .prob-media {
+      color: #ffcc00;
+      font-weight: bold;
+    }
+    .prob-baixa {
+      color: #ff4444;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>A7 Futebol - Jogos ao Vivo com Chance de Escanteios</h1>
+  <div id="jogos">Carregando jogos...</div>
+
+  <script>
+    const apiKey = "6d4b532590119f7e27104047cf07ab6c";
+    const endpoint = "https://api.the-odds-api.com/v4/sports/soccer/odds/?regions=eu&markets=totals&apiKey=" + apiKey;
+
+    async function carregarJogos() {
+      try {
+        const resposta = await fetch(endpoint);
+        const dados = await resposta.json();
+        const container = document.getElementById("jogos");
+        container.innerHTML = "";
+
+        if (!dados || dados.length === 0) {
+          container.innerHTML = "<p>Nenhum jogo com dados disponíveis no momento.</p>";
+          return;
+        }
+
+        dados.forEach(jogo => {
+          const nome = `${jogo.home_team} vs ${jogo.away_team}`;
+          const odd = jogo.bookmakers?.[0]?.markets?.[0]?.outcomes?.[0]?.price || 0;
+          let probabilidade = 100 - (odd * 10); // cálculo simples
+          let classe = probabilidade >= 75
+            ? "prob-alta"
+            : probabilidade >= 50
+              ? "prob-media"
+              : "prob-baixa";
+
+          container.innerHTML += `
+            <div class="jogo">
+              <strong>${nome}</strong><br>
+              Chance de escanteio: <span class="${classe}">${probabilidade.toFixed(0)}%</span>
+            </div>
+          `;
+        });
+      } catch (erro) {
+        document.getElementById("jogos").innerHTML = "Erro ao carregar dados da API.";
+        console.error(erro);
+      }
+    }
+
+    carregarJogos();
+    setInterval(carregarJogos, 60000);
+  </script>
+</body>
+</html>
